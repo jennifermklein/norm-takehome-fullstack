@@ -1,9 +1,27 @@
-This repository contains a client and server codebase. 
+# Westeros Capital Group
 
-## Server Repository:
+## Welcome!
 
-This codebase contains a list of laws (`docs/laws.pdf`) taken from the fictional series “Game of Thrones” (randomly pulled from a wiki fandom site... unfortunately knowledge of the series does not provide an edge on this assignment). Your task is to implement a new service (described in take home exercise document) and provide access to that service via a FastAPI endpoint running in a docker container. Please replace this readme with the steps required to run your app.
+Please follow the instructions below to run the app.
 
-## Client Repository 
+## Server
+
+### Prerequisites
+
+- Clone the repository
+
+- Generate an API key from [OpenAI](https://platform.openai.com/settings/organization/api-keys) and add it to an .env file in your root directory as `OPENAI_API_KEY=<key>`
+
+- Make sure you have [Docker](https://docs.docker.com/engine/install/) installed and running.
+
+### Build and Run
+
+- Build the docker image by running: `docker build -t westeros .`
+
+- Run the service via command: `docker run -p 8000:80 --env-file .env westeros`. This will run the server on port 8000 and make the api key you added to .env accessible.
+
+- Access the FastAPI endpoints locally via the Swagger UI at: [http://localhost:8000/docs]()
+
+## Client Repository
 
 In the `frontend` folder you'll find a light NextJS app with it's own README including instructions to run. Your task here is to build a minimal client experience that utilizes the service build in part 1.
