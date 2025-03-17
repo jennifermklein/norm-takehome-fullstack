@@ -4,9 +4,10 @@ from llama_index.vector_stores.qdrant import QdrantVectorStore
 from llama_index.embeddings.openai import OpenAIEmbedding
 from llama_index.llms.openai import OpenAI
 from llama_index.core import Document, VectorStoreIndex, ServiceContext
-
+import fitz # PyMuPDF
 from dataclasses import dataclass
 import os
+import re
 
 key = os.environ['OPENAI_API_KEY']
 
@@ -51,6 +52,40 @@ class DocumentService:
         return docs
 
      """
+    
+   # get pdf contents as a string
+    def get_pdf_contents(self, file_path: str = "./docs/laws.pdf") -> str:
+        """Extract text from a PDF file."""
+        try:
+            doc = fitz.open(file_path)
+            text = ""
+            
+            for page in doc:
+                text += page.get_text()
+            
+            doc.close()
+            
+            return text
+        except Exception as e:
+            raise Exception(f"Error reading PDF file: {str(e)}")
+        
+    # Split the text into major sections
+    def extract_laws(self, text: str) -> list[str]:
+        # remove "Citations" section at the end of the document
+        # find last occurence of "Citations"
+        citations_idx = text.rfind("Citations")
+        text = text[:citations_idx]
+        
+        # split text by top heading level, e.g. 1., 2., 3., etc.
+        pattern = r"(?=\n\d+\.\n)"
+        sections = re.split(pattern, text)
+        # remove first section, which is the title
+        sections = sections[1:]
+
+        # remove empty sections and line breaks
+        sections = [section.strip() for section in sections if section.strip()]
+
+        return sections
 
 class QdrantService:
     def __init__(self, k: int = 2):
