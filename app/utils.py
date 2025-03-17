@@ -27,31 +27,26 @@ class Output(BaseModel):
     citations: list[Citation]
 
 class DocumentService:
+    def create_documents(self) -> list[Document]:
+        """
+        This service load a pdf and extracts its contents.
+        The method then creates a structured list of Document objects, 
+        which are used to load into a Qdrant collection.
+        """
+        content = self.get_pdf_contents()
+        sections = self.extract_laws(content)
 
-    """
-    Update this service to load the pdf and extract its contents.
-    The example code below will help with the data structured required
-    when using the QdrantService.load() method below. Note: for this
-    exercise, ignore the subtle difference between llama-index's 
-    Document and Node classes (i.e, treat them as interchangeable).
+        docs = []
 
-    # example code
-    def create_documents() -> list[Document]:
-
-        docs = [
-            Document(
-                metadata={"Section": "Law 1"},
-                text="Theft is punishable by hanging",
-            ),
-            Document(
-                metadata={"Section": "Law 2"},
-                text="Tax evasion is punishable by banishment.",
-            ),
-        ]
+        for section in sections:
+            section_number = section.split(".")[0]
+            section_title = section.split("\n")[1]
+            docs.append(Document(
+                metadata={"Section": section_number, "Title": section_title},
+                text=section
+            ))
 
         return docs
-
-     """
     
    # get pdf contents as a string
     def get_pdf_contents(self, file_path: str = "./docs/laws.pdf") -> str:

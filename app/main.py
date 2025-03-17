@@ -32,3 +32,13 @@ async def get_laws_sections():
         return {"sections": sections}
     except Exception as e:
         return {"error": str(e)}
+    
+# endpoint to get document objects from laws.pdf
+@app.get("/laws/documents")
+async def get_laws_documents():
+    try:
+        doc_service = DocumentService()
+        documents = doc_service.create_documents()
+        return {"documents": documents}
+    except Exception as e:
+        return {"error": str(e)}
