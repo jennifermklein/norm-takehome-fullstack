@@ -38,19 +38,30 @@ class DocumentService:
         content = self.get_pdf_contents()
         sections = self.extract_laws(content)
 
+        document_title = sections[0]
+        sections = sections[1:]
+
         docs = []
 
         for section in sections:
             section_number = section.split(".")[0]
             section_title = section.split("\n")[1]
-            docs.append(Document(
-                metadata={"Section": section_number, "Title": section_title},
-                text=section
-            ))
+
+            # split section into minor sections
+            subsection_pattern = r"(?=\n\d+\.\d+(\.\d+)?\.?\n)"
+            subsections = re.split(subsection_pattern, section)[1:]
+
+            for subsection in subsections:
+                if not subsection or not subsection.strip() or subsection.strip().startswith("."):
+                    continue
+                
+                docs.append(Document(
+                    metadata={"Section_Number": section_number, "Law_Title": section_title, "Document_Title": document_title},
+                    text=subsection
+                ))
 
         return docs
     
-   # get pdf contents as a string
     def get_pdf_contents(self, file_path: str = "./docs/laws.pdf") -> str:
         """Extract text from a PDF file."""
         try:
@@ -66,18 +77,17 @@ class DocumentService:
         except Exception as e:
             raise Exception(f"Error reading PDF file: {str(e)}")
         
-    # Split the text into major sections
     def extract_laws(self, text: str) -> list[str]:
+        """
+        Extracts the major sections of the file, i.e. top level law headings formatted as 1., 2., 3., etc.
+        """
         # remove "Citations" section at the end of the document
-        # find last occurence of "Citations"
         citations_idx = text.rfind("Citations")
         text = text[:citations_idx]
         
-        # split text by top heading level, e.g. 1., 2., 3., etc.
-        pattern = r"(?=\n\d+\.\n)"
-        sections = re.split(pattern, text)
-        # remove first section, which is the title
-        sections = sections[1:]
+        # split text by top heading level
+        section_pattern = r"(?=\n\d+\.\n)"
+        sections = re.split(section_pattern, text)
 
         # remove empty sections and line breaks
         sections = [section.strip() for section in sections if section.strip()]
@@ -130,7 +140,7 @@ class QdrantService:
         citations = []
         for source_node in response.source_nodes:
             citations.append(Citation(
-                source=f"{source_node.metadata.get('Section')}: {source_node.metadata.get('Title')}",
+                source=f"{source_node.metadata.get('Section_Number')}. {source_node.metadata.get('Law_Title')}",
                 text="\n".join(source_node.text.split("\n")[1:])
             ))
 
