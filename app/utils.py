@@ -58,7 +58,7 @@ class DocumentService:
                 if not subsection or not subsection.strip() or subsection.strip().startswith("."):
                     continue
 
-                # if section_text has bolded headings, extract them and do not treat as it's own document
+                # if subsection has bolded headings, extract them and do not treat as its own document
                 # instead, store the subsection number and title for metadata of subsequent subsections
                 if subsection.strip().startswith("**"):
                     current_subsection_number, current_subsection_title, _ = self.extract_section_headings(subsection)
