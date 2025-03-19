@@ -1,16 +1,14 @@
 # Westeros Capital Group
 
-## Welcome!
+Welcome! Please follow the instructions below to run the application.
 
-Please follow the instructions below to run the app.
-
-## Server
+![image](./app/kingdoms_of_westeros_by_keyser94_dd03kjv-414w-2x.jpg)
 
 ### Prerequisites
 
 - Clone the repository
 
-- Generate an API key from [OpenAI](https://platform.openai.com/settings/organization/api-keys) and add it to an .env file in your root directory as `OPENAI_API_KEY=<key>`
+- Generate an API key from [OpenAI](https://platform.openai.com/settings/organization/api-keys) and add it to an .env file in your root directory as `OPENAI_API_KEY=<key>`.
 
 - Make sure you have [Docker](https://docs.docker.com/engine/install/) installed and running.
 
@@ -22,6 +20,4 @@ Please follow the instructions below to run the app.
 
 - Access the FastAPI endpoints locally via the Swagger UI at: [http://localhost:8000/docs]()
 
-## Client Repository
-
-In the `frontend` folder you'll find a light NextJS app with it's own README including instructions to run. Your task here is to build a minimal client experience that utilizes the service build in part 1.
+- Enter a query string into the `laws/query` endpoint and click "Execute". Scroll to the Response body section to see the query, response, and citations.

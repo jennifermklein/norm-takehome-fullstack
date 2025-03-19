@@ -6,10 +6,10 @@ from llama_index.llms.openai import OpenAI
 from llama_index.core import Document, VectorStoreIndex
 from llama_index.core.settings import Settings
 from llama_index.core.query_engine import CitationQueryEngine
-import fitz # PyMuPDF
 from dataclasses import dataclass
 import os
 import re
+import pymupdf4llm
 
 key = os.environ['OPENAI_API_KEY']
 
@@ -35,65 +35,79 @@ class DocumentService:
         The method then creates a structured list of Document objects, 
         which are used to load into a Qdrant collection.
         """
-        content = self.get_pdf_contents()
+        content = pymupdf4llm.to_markdown("./docs/laws.pdf")
         sections = self.extract_laws(content)
 
+        # extract and remove document title to use as metadata
         document_title = sections[0]
         sections = sections[1:]
 
         docs = []
 
         for section in sections:
-            section_number = section.split(".")[0]
-            section_title = section.split("\n")[1]
+            section_number, section_title, section_text = self.extract_section_headings(section)
 
             # split section into minor sections
-            subsection_pattern = r"(?=\n\d+\.\d+(\.\d+)?\.?\n)"
-            subsections = re.split(subsection_pattern, section)[1:]
+            subsection_pattern = r"(?=\n(?:\*\*\d+(\.\d+)*\.\*\*|\d+(\.\d+)*\. ))"
+            subsections = re.split(subsection_pattern, section_text)
+
+            current_subsection_number = None
+            current_subsection_title = None
 
             for subsection in subsections:
                 if not subsection or not subsection.strip() or subsection.strip().startswith("."):
                     continue
+
+                # if section_text has bolded headings, extract them and do not treat as it's own document
+                # instead, store the subsection number and title for metadata of subsequent subsections
+                if subsection.strip().startswith("**"):
+                    current_subsection_number, current_subsection_title, _ = self.extract_section_headings(subsection)
+                    continue
                 
                 docs.append(Document(
-                    metadata={"Section_Number": section_number, "Law_Title": section_title, "Document_Title": document_title},
+                    metadata={"Document_Title": document_title,
+                              "Section_Number": section_number,
+                              "Section_Title": section_title,
+                              "Subsection_Number": current_subsection_number,
+                              "Subsection_Title": current_subsection_title},
                     text=subsection
                 ))
 
         return docs
     
-    def get_pdf_contents(self, file_path: str = "./docs/laws.pdf") -> str:
-        """Extract text from a PDF file."""
-        try:
-            doc = fitz.open(file_path)
-            text = ""
-            
-            for page in doc:
-                text += page.get_text()
-            
-            doc.close()
-            
-            return text
-        except Exception as e:
-            raise Exception(f"Error reading PDF file: {str(e)}")
+    def extract_section_headings(self, text) -> tuple[str, str, str]:
+            # Extract section number, assuming it is the first bolded heading
+            section_num_start_idx = text.find("**")
+            section_num_end_idx = text.find("**", section_num_start_idx + 2)
+            section_number = text[section_num_start_idx + 2:section_num_end_idx]
+
+            # extract section title, assuming it is the second bolded heading
+            section_title_start_idx = text.find("**", section_num_end_idx + 2)
+            section_title_end_idx = text.find("**", section_title_start_idx + 2)
+            section_title = text[section_title_start_idx + 2:section_title_end_idx]
+
+            section_text = text[section_title_end_idx + 2:]
+
+            return section_number, section_title, section_text    
         
     def extract_laws(self, text: str) -> list[str]:
         """
         Extracts the major sections of the file, i.e. top level law headings formatted as 1., 2., 3., etc.
         """
         # remove "Citations" section at the end of the document
-        citations_idx = text.rfind("Citations")
+        citations_idx = text.rfind("**Citations")
         text = text[:citations_idx]
         
         # split text by top heading level
-        section_pattern = r"(?=\n\d+\.\n)"
+        section_pattern = r"(?=\*\*\d+\.\*\*)"
         sections = re.split(section_pattern, text)
 
         # remove empty sections and line breaks
         sections = [section.strip() for section in sections if section.strip()]
 
         return sections
-
+        
+        
 class QdrantService:
     def __init__(self, k: int = 2):
         self.index = None
@@ -139,8 +153,12 @@ class QdrantService:
         # Extract and format citations from the response
         citations = []
         for source_node in response.source_nodes:
+            source = f"{source_node.metadata.get('Section_Number')} {source_node.metadata.get('Section_Title')}"
+            if source_node.metadata.get('Subsection_Number') is not None:
+                source = f"{source}, {source_node.metadata.get('Subsection_Number')} {source_node.metadata.get('Subsection_Title')}"
+
             citations.append(Citation(
-                source=f"{source_node.metadata.get('Section_Number')}. {source_node.metadata.get('Law_Title')}",
+                source=source,
                 text="\n".join(source_node.text.split("\n")[1:])
             ))
 
