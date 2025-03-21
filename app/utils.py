@@ -132,8 +132,7 @@ class QdrantService:
     def query(self, query_str: str) -> Output:
         """
         This method initializes the query engine, runs the query, and return
-        the result as a pydantic Output class. Longer queries will include more citations,
-        because self.k is set based on the query length.
+        the result as a pydantic Output class.
         """
 
         # parse pdf into documents and load into Qdrant
