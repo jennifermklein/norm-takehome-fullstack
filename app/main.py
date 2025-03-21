@@ -1,8 +1,18 @@
 from fastapi import FastAPI, Query
-from app.utils import Output, DocumentService, QdrantService
+from fastapi.middleware.cors import CORSMiddleware
+from app.utils import Output, QdrantService
 from math import ceil
 
 app = FastAPI()
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 """
 Please create an endpoint that accepts a query string, e.g., "what happens if I steal 
