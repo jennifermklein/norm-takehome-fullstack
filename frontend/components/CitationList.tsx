@@ -19,7 +19,8 @@ export default function CitationList({ citations }: { citations: Citation[] }) {
               <Box>
                 <Text>
                   <Text as="span" fontWeight="bold">
-                    [{i + 1}] {citation.source}
+                    <sup style={{ color: 'gray' }}>[{i + 1}]</sup>{' '}
+                    {citation.source}
                   </Text>
                   {' - '}
                   {citation.text}
