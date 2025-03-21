@@ -18,9 +18,11 @@ Welcome! Please follow the instructions below to run the application.
 
 - Run the service via command: `docker run -p 8000:80 --env-file .env westeros`. This will run the server on port 8000 and make the api key you added to .env accessible.
 
-- Access the FastAPI endpoints locally via the Swagger UI at: [http://localhost:8000/docs]()
+- Access the FastAPI endpoint locally via the Swagger UI at: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 - Enter a query string into the `laws/query` endpoint and click "Execute". Scroll to the Response body section to see the query, response, and citations.
+
+- To interact with the endpoints via the UI, see the instructions in [frontend/README.md](https://github.com/jennifermklein/norm-takehome-fullstack/blob/main/frontend/README.md)
 
 ### Reflective Response Section
 
